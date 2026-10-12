@@ -13,6 +13,8 @@ const { decodeFunctionData, encodeFunctionResult, encodeEventTopics, encodeAbiPa
 const { permit2Abi, quoterAbi, stateViewAbi, universalRouterAbi } = require(path.join(ROOT, 'web/src/config.ts'))
 const baseline = process.argv.includes('--baseline')
 const liveReads = process.argv.includes('--live-reads')
+const outputArg = process.argv.indexOf('--output-dir')
+const outputDir = outputArg >= 0 ? path.resolve(process.argv[outputArg + 1]) : path.join(ROOT, 'docs/validation')
 const DIST = path.join(ROOT, baseline ? 'test/scratch/baseline-dist' : 'dist')
 const manifest = JSON.parse(fs.readFileSync(path.join(DIST, 'imd-deployment.json')))
 const handoff = JSON.parse(fs.readFileSync(path.join(ROOT, 'web/deployment/deployment.json')))
@@ -133,7 +135,7 @@ const wallet = `(() => {
   const announce = () => window.dispatchEvent(new CustomEvent('eip6963:announceProvider', {detail:{info,provider}}));
   window.addEventListener('eip6963:requestProvider', announce); announce();
 })();`
-const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.woff2': 'font/woff2', '.svg': 'image/svg+xml' }
+const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.png': 'image/png' }
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://local')
   const relative = url.pathname.slice('/preview/'.length) || 'index.html'
@@ -154,7 +156,7 @@ async function main() {
   const consoleErrors = []
   const resources = []
   const contexts = []
-  const shots = path.join(ROOT, baseline ? 'test/scratch/baseline-shots' : 'docs/validation/revision-screenshots')
+  const shots = baseline ? path.join(ROOT, 'test/scratch/baseline-shots') : path.join(outputDir, 'revision-screenshots')
   fs.mkdirSync(shots, { recursive: true })
   async function newPage(withWallet = false) {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 } })
@@ -211,6 +213,20 @@ async function main() {
       })
       record(`stamp clears panel at ${width}`, bounds.stamp.bottom + 2 < bounds.panel.top, bounds)
       await page.locator('.card--example').screenshot({ path: path.join(shots, `card-${width}.png`) })
+      if (!baseline) {
+        const metadata = await page.evaluate(async () => {
+          const og = document.querySelector('meta[property="og:image"]')?.content
+          const twitter = document.querySelector('meta[name="twitter:image"]')?.content
+          const card = document.querySelector('meta[name="twitter:card"]')?.content
+          const alt = document.querySelector('meta[property="og:image:alt"]')?.content
+          const twitterAlt = document.querySelector('meta[name="twitter:image:alt"]')?.content
+          const image = new Image()
+          image.src = new URL(og || 'missing-image', document.baseURI).href
+          await image.decode()
+          return { og, twitter, card, alt, twitterAlt, width: image.naturalWidth, height: image.naturalHeight, url: image.src }
+        })
+        record(`share preview resolves under a gateway subpath at ${width}px`, metadata.og === './share-card.png' && metadata.twitter === metadata.og && metadata.card === 'summary_large_image' && metadata.alt.includes('Example') && metadata.twitterAlt === metadata.alt && metadata.width === 1200 && metadata.height === 630 && metadata.url === base + 'share-card.png', metadata)
+      }
     }
     const history = await page.locator('.section .report-row__no').allTextContents()
     record('latest five follow answer events', history.join(',') === 'No. 0001,No. 0006,No. 0005,No. 0004,No. 0003', history)
@@ -391,6 +407,8 @@ async function main() {
         })
         record(`answered report ${reportId} stamp clears panel`, geometry.stampBottom + 2 < geometry.panelTop, geometry)
         await connected.locator('.card').screenshot({ path: path.join(shots, `report-${reportId}-390.png`) })
+        const share = new URL(await connected.getByRole('link', { name: 'Post it on X', exact: true }).getAttribute('href'))
+        record(`report ${reportId} share link retains its claim and route`, share.origin === 'https://x.com' && share.pathname === '/intent/post' && share.searchParams.get('url') === base + '#/report/' + reportId && share.searchParams.get('text').includes(reportId === 1 ? 'CLEAN' : 'SNITCHED'), { text: share.searchParams.get('text'), url: share.searchParams.get('url') })
       }
       await connected.getByRole('button', { name: 'File the report', exact: true }).click()
       await connected.getByText(/Rejected in the wallet/).waitFor()
@@ -410,12 +428,16 @@ async function main() {
       await connected.emulateMedia({ reducedMotion: 'reduce' })
       record('stamp honors reduced motion', await connected.locator('.stamp').evaluate(e => getComputedStyle(e).animationName === 'none'))
     }
-    record('static metadata has no invented public image URL', await page.locator('meta[property="og:image"]').count() === 0, { imageCount: await page.locator('meta[property="og:image"]').count(), note: 'No public hosting URL supplied; metadata deferred per the pinned adapter.' })
+    if (!baseline) {
+      const html = await (await page.request.get(base)).text()
+      const preview = await page.request.get(base + 'share-card.png')
+      record('share metadata is present without JavaScript and PNG is exported', html.includes('property="og:image" content="./share-card.png"') && html.includes('name="twitter:image" content="./share-card.png"') && preview.status() === 200 && preview.headers()['content-type'] === 'image/png' && manifest.assets.some(a => a.path === 'share-card.png'), { status: preview.status(), contentType: preview.headers()['content-type'] })
+    }
     record('no page errors, console errors, failed assets or unhandled fixture requests', !errors.length && !consoleErrors.length && !resources.length && !unhandled.length, { errors, consoleErrors, resources, unhandled })
   } finally {
     await browser.close()
     await new Promise(resolve => server.close(resolve))
-    fs.writeFileSync(path.join(ROOT, 'docs/validation', liveReads ? 'revision-live-browser.json' : baseline ? 'revision-before.json' : 'revision-after.json'), JSON.stringify({ baseline, liveReads, browser: browser.version(), checks, rpcRequests: requests.length }, null, 2) + '\n')
+    fs.writeFileSync(path.join(outputDir, liveReads ? 'revision-live-browser.json' : baseline ? 'revision-before.json' : 'revision-after.json'), JSON.stringify({ baseline, liveReads, browser: browser.version(), checks, rpcRequests: requests.length }, null, 2) + '\n')
   }
   if (!baseline && checks.some(c => !c.ok)) process.exitCode = 1
 }

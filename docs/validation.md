@@ -1,9 +1,11 @@
 # SNITCH frontend: validation record
 
-**Current revision:** [reproduction, repairs and final checks](validation/revision.md). All 11
-review findings have responses in the repository-root `.imd-responses.json`: nine fixed and two
-disputed against explicit assignment guidance. The current export passed typecheck, build, 40 unit
-tests, 45 deterministic browser checks, four live browser checks, and the manifest/ABI audit.
+**Current revision:** [offline installation and share-preview findings](validation/revision-2.md).
+The two reopened findings are answered in `.imd-responses.json`: the preview is fixed, and the
+offline-build requirement is disputed against the controlling assignment. The current export
+passed typecheck, build, 40 unit tests, 49 deterministic browser checks and the manifest/ABI audit.
+The [previous revision](validation/revision.md) records the accepted application fixes and earlier
+live-read checks; those live checks were not rerun for the metadata-only revision.
 
 The record below describes the original accepted implementation and its original checks. In
 particular, the original case-number index and pool-price display are superseded by this revision;

@@ -63,10 +63,30 @@ export needs no npm install or build to serve: from the repository root,
 `python3 -m http.server 4173 --directory dist` serves the already bundled files. Contract reads and
 wallet operations still require network access. An empty-cache `npm ci --offline` is not supported.
 
-Social preview image metadata remains pending: no public domain or gateway URL was supplied.
-The pinned frontend UX adapter explicitly defers absolute Open Graph URLs in that situation.
-The publisher can add a reachable image URL once hosting is known, then regenerate the manifest;
-the worker does not guess a public URL or publish the site.
+The social preview is `public/share-card.png`, copied to `dist/share-card.png`: a 1200×630 PNG
+using the existing case-file design and the home page's clearly labelled **Example** report.
+`index.html` includes `og:image`, `twitter:image`, image descriptions, dimensions and
+`twitter:card=summary_large_image`. Both image paths are `./share-card.png` so the asset resolves
+from a gateway subpath without an invented public domain. Once hosting is assigned, the publisher
+must replace both image paths in `web/index.html` with the same absolute public image URL, rebuild,
+regenerate the manifest, and check a real social preview. The worker has not published the site
+or verified any social platform's crawler. Hash routes share this one site card, not a live report
+image; the existing "Post it on X" link includes the individual claim and report URL.
+
+The PNG is committed, so ordinary builds need no image tooling. To refresh it after a design
+change, run `build` and `manifest` first, then from the repository root:
+
+```sh
+npm install --prefix test/scratch/share-tools --no-audit --no-fund playwright@1.64.0
+PLAYWRIGHT_BROWSERS_PATH=/tmp/snitch-share-browsers node test/scratch/share-tools/node_modules/playwright/cli.js install chromium
+NODE_PATH="$PWD/test/scratch/share-tools/node_modules" PLAYWRIGHT_BROWSERS_PATH=/tmp/snitch-share-browsers node web/scripts/share-card.cjs
+npm --prefix web run build
+npm --prefix web run manifest
+```
+
+The generator serves the existing export in a temporary local browser, reuses its fonts, colours,
+copy and example card, and blocks external requests. Inspect the PNG after regeneration; its
+browser tools are local check dependencies and are not part of the submission.
 
 ## What the pages do
 
@@ -107,5 +127,7 @@ See `docs/validation.md` for the build, typecheck, unit-test and browser results
 live RPC reads), the Better Interface review, and what was not tested on a live chain.
 The revision evidence and commands are in `docs/validation/revision.md`, including 45 deterministic
 browser checks, four live-read checks, and the response to each review finding.
+The subsequent offline-install and share-preview review is recorded in
+`docs/validation/revision-2.md`, with fresh build, interaction and manifest results.
 `docs/DESIGN.md` documents the implemented tokens, typography, components and responsive
 behaviour for anyone adding a page.

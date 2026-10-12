@@ -1,0 +1,41 @@
+{
+  "passed": true,
+  "sourceCommit": "13de1c8a9975a6dcab5202f6b01c9a9363d76b29",
+  "abis": [
+    {
+      "name": "LaunchToken",
+      "matchesPinnedSource": true,
+      "abiHash": "66c0725e9072e2c383f59b9a3baa620d857711ec96837623ad2372c434b83f07",
+      "attested": true
+    },
+    {
+      "name": "SnitchArt",
+      "matchesPinnedSource": true,
+      "abiHash": "763cfb8b128ced01506e86ebe2a42584dd511c9bd1c03e0fa34b84b41f9f10fb",
+      "attested": true
+    },
+    {
+      "name": "SnitchDesk",
+      "matchesPinnedSource": true,
+      "abiHash": "109cf3731ef4d4766ffb366e3f69b0a65e9105f465acaadabe64628b9cf18eb3",
+      "attested": true
+    },
+    {
+      "name": "SnitchReports",
+      "matchesPinnedSource": true,
+      "abiHash": "eda4ebff9fd5bb08fbdad59a255b61f7db48acee967930a0818327e3a72b63d8",
+      "attested": false
+    }
+  ],
+  "handoffBinding": "exact",
+  "assets": 12,
+  "assetBytes": 1036599,
+  "manifestBytes": 4346,
+  "shareImage": {
+    "width": 1200,
+    "height": 630,
+    "bytes": 296905,
+    "sha256": "cebd798738a5d57a156d2eed9c3bd7e217cae86792d2546110d6b03552125b3d"
+  },
+  "externalTransactions": 0
+}

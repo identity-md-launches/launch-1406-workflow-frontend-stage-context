@@ -1,0 +1,12 @@
+{
+  "limitBytes": 8388608,
+  "candidateFileCount": 518,
+  "candidateFileBytes": 6778988,
+  "snapshotGitBundleBelowBytes": 4194304,
+  "scope": "Only web/, dist/, docs/, plus the expressly requested root .imd-responses.json. No ignore file changes.",
+  "dependencyPayloads": "None. node_modules and package-manager/browser caches are excluded at every nesting level.",
+  "submoduleEntries": 0,
+  "unchanged": "Contract source, pinned ABI source, app TypeScript/CSS, package manifest/lockfile, root configuration and ignore files.",
+  "bundleMethod": "A self-contained single-commit Git snapshot was built and verified in disposable test/scratch storage, containing all current tracked files plus new deliverables and .imd-responses.json. It is below the stated bound; this is not a measurement of the publisher's subsequent history-bearing bundle.",
+  "repositoryGitMetadata": "Read-only in this worker session; source/export/evidence files are ready for the submission collector."
+}

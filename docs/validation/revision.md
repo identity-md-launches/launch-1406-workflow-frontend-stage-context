@@ -1,5 +1,8 @@
 # SNITCH revision validation
 
+Historical record of the first revision. [Revision 2](revision-2.md) supersedes the social-image
+decision and records the latest export, checks and two reopened finding responses.
+
 Worker evidence, 2026-10-12. This is not independent certification or a publication result.
 The accepted design and contract implementation are preserved. Changes are limited to the
 reported defects, their regression checks, rebuilt `dist/`, and documentation. The required root

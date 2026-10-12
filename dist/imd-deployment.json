@@ -67,7 +67,11 @@
     },
     {
       "path": "index.html",
-      "sha256": "8d829fdeb681d327916263a93c69231bc28733dd4090df22bc7dd4c0949f954b"
+      "sha256": "4023863ccd7e5c07a23e38530cfb290e15f4e6c26f4608df429e4e91a5468975"
+    },
+    {
+      "path": "share-card.png",
+      "sha256": "cebd798738a5d57a156d2eed9c3bd7e217cae86792d2546110d6b03552125b3d"
     }
   ],
   "poolKey": {
