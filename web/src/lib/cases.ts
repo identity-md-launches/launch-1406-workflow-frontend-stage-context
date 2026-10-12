@@ -101,7 +101,6 @@ export function filterReports(cases: Case[], filter: Filter, query: string): Cas
         c.id.toString() === q.replace(/^#?0*/, '')
       )
     })
-    .sort((a, b) => (a.id > b.id ? -1 : 1))
 }
 
 /** The example card on the home page: a made-up case, never read from the chain. */

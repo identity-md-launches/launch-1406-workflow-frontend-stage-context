@@ -72,17 +72,17 @@ describe('case files', () => {
     { ...base, id: 4n, status: Status.Dropped },
     { ...base, id: 5n, status: Status.Filed, verdict: false },
   ]
-  it('lists answered and filed cases newest first', () => {
-    expect(filterReports(cases, 'all', '').map((c) => c.id)).toEqual([5n, 2n, 1n])
+  it('lists answered and filed cases without changing event order', () => {
+    expect(filterReports(cases, 'all', '').map((c) => c.id)).toEqual([1n, 2n, 5n])
   })
   it('filters by verdict', () => {
     expect(filterReports(cases, 'clean', '').map((c) => c.id)).toEqual([1n])
-    expect(filterReports(cases, 'snitched', '').map((c) => c.id)).toEqual([5n, 2n])
+    expect(filterReports(cases, 'snitched', '').map((c) => c.id)).toEqual([2n, 5n])
   })
   it('searches by wallet, token address, symbol or number', () => {
     expect(filterReports(cases, 'all', '0xabc').map((c) => c.id)).toEqual([2n])
     expect(filterReports(cases, 'all', 'wif').map((c) => c.id)).toEqual([2n])
-    expect(filterReports(cases, 'all', '0x6982').map((c) => c.id)).toEqual([5n, 2n, 1n])
+    expect(filterReports(cases, 'all', '0x6982').map((c) => c.id)).toEqual([1n, 2n, 5n])
     expect(filterReports(cases, 'all', '#0005').map((c) => c.id)).toEqual([5n])
   })
   it('decodes getCase output', () => {

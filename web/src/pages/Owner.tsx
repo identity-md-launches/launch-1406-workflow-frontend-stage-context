@@ -16,7 +16,6 @@ export function Owner() {
   const { address, isConnected } = useAccount()
   const { wrongChain, chainName } = useEnsureChain()
   const isOwner = !!address && !!desk.owner && address.toLowerCase() === desk.owner.toLowerCase()
-  const can = isConnected && !wrongChain && isOwner
   const ids = { fee: useId(), size: useId(), quorum: useId(), intake: useId(), action: useId(), signer: useId(), hook: useId() }
   const [fee, setFee] = useState('')
   const [size, setSize] = useState('')
@@ -34,6 +33,7 @@ export function Owner() {
   const actionTx = useTx(refresh)
   const signerTx = useTx(refresh)
   const hookTx = useTx(refresh)
+  const can = isConnected && !wrongChain && isOwner && feeTx.ready
   const deskArgs = { abi: d.abis.SnitchDesk, address: d.addresses.SnitchDesk } as const
 
   const actionText = desk.action ? decodeAction(desk.action) : ''
@@ -52,6 +52,7 @@ export function Owner() {
       </dl>
       {!isConnected && <p className="hint">Connect the owner wallet to change settings.</p>}
       {isConnected && wrongChain && <p className="hint">Switch the wallet to {chainName} to change settings.</p>}
+      {feeTx.walletStatus && <p className="hint" role="status">{feeTx.walletStatus}</p>}
       {isConnected && !wrongChain && !isOwner && (
         <p className="tx tx--error" role="status">
           This wallet is not the owner. The controls below are read-only for it.

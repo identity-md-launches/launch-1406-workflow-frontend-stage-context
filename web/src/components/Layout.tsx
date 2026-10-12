@@ -23,7 +23,12 @@ export function Layout({ route, children }: { route: Route; children: ReactNode 
   const isOwner = !!address && !!desk.owner && address.toLowerCase() === desk.owner.toLowerCase()
   return (
     <>
-      <a className="skip" href="#main">
+      <a className="skip" href="#main" onClick={(event) => {
+        event.preventDefault()
+        const main = document.getElementById('main')
+        main?.focus({ preventScroll: true })
+        main?.scrollIntoView()
+      }}>
         Skip to content
       </a>
       <header className="site-header">

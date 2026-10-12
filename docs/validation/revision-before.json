@@ -1,0 +1,179 @@
+{
+  "baseline": true,
+  "browser": "Playwright Chromium",
+  "checks": [
+    {
+      "check": "stamp clears panel at 390",
+      "ok": false,
+      "detail": {
+        "stamp": {
+          "x": 108.52619934082031,
+          "y": 744.9117431640625,
+          "width": 142.3159942626953,
+          "height": 86.25244140625,
+          "top": 744.9117431640625,
+          "right": 250.84219360351562,
+          "bottom": 831.1641845703125,
+          "left": 108.52619934082031
+        },
+        "panel": {
+          "x": 47.5,
+          "y": 811.25,
+          "width": 200.93751525878906,
+          "height": 17,
+          "top": 811.25,
+          "right": 248.43751525878906,
+          "bottom": 828.25,
+          "left": 47.5
+        }
+      }
+    },
+    {
+      "check": "stamp clears panel at 1440",
+      "ok": false,
+      "detail": {
+        "stamp": {
+          "x": 259.1932678222656,
+          "y": 719.858154296875,
+          "width": 152.73275756835938,
+          "height": 92.431640625,
+          "top": 719.858154296875,
+          "right": 411.926025390625,
+          "bottom": 812.289794921875,
+          "left": 259.1932678222656
+        },
+        "panel": {
+          "x": 193.669921875,
+          "y": 790.8662109375,
+          "width": 215.59375,
+          "height": 18,
+          "top": 790.8662109375,
+          "right": 409.263671875,
+          "bottom": 808.8662109375,
+          "left": 193.669921875
+        }
+      }
+    },
+    {
+      "check": "latest five follow answer events",
+      "ok": false,
+      "detail": [
+        "No. 0006",
+        "No. 0005",
+        "No. 0004",
+        "No. 0003",
+        "No. 0002"
+      ]
+    },
+    {
+      "check": "case files preserve event order and read logs",
+      "ok": false,
+      "detail": {
+        "all": [
+          "No. 0006",
+          "No. 0005",
+          "No. 0004",
+          "No. 0003",
+          "No. 0002",
+          "No. 0001"
+        ],
+        "logRequests": 0
+      }
+    },
+    {
+      "check": "wallet menu fits 320px",
+      "ok": false,
+      "detail": {
+        "x": -63.46875,
+        "y": 140,
+        "width": 256,
+        "height": 147
+      }
+    },
+    {
+      "check": "skip retains open route, input and main focus",
+      "ok": false,
+      "detail": {
+        "url": "http://127.0.0.1:38471/preview/#main",
+        "heading": "No such page"
+      }
+    },
+    {
+      "check": "disconnected allowances are unknown",
+      "ok": false,
+      "detail": [
+        "IMD approved to Permit2",
+        "Router allowed",
+        "Buy SNITCH"
+      ]
+    },
+    {
+      "check": "pool price retains precision before reciprocal",
+      "ok": false,
+      "detail": "1 SNITCH = 0.000002 IMD · 1 IMD = 500000 SNITCH"
+    },
+    {
+      "check": "cleared pending quote resets loading",
+      "ok": false,
+      "detail": "Quoting…"
+    },
+    {
+      "check": "late defaults preserve edited window",
+      "ok": false,
+      "detail": {
+        "from": "26176091",
+        "to": "26176591"
+      }
+    },
+    {
+      "check": "approve reaches wallet after unsupported-chain switch",
+      "ok": false,
+      "detail": {
+        "tx": [],
+        "errors": [
+          "Connect a wallet first."
+        ]
+      }
+    },
+    {
+      "check": "unknown chain add uses exact handoff",
+      "ok": true,
+      "detail": [
+        {
+          "chainId": "0x1",
+          "chainName": "Ethereum",
+          "rpcUrls": [
+            "https://ethereum-rpc.publicnode.com",
+            "https://eth.drpc.org"
+          ],
+          "nativeCurrency": {
+            "name": "Ether",
+            "symbol": "ETH",
+            "decimals": 18
+          },
+          "blockExplorerUrls": [
+            "https://etherscan.io"
+          ]
+        }
+      ]
+    },
+    {
+      "check": "static metadata has no invented public image URL",
+      "ok": true,
+      "detail": {
+        "imageCount": 0,
+        "note": "No public hosting URL supplied; metadata deferred per the pinned adapter."
+      }
+    },
+    {
+      "check": "no page errors, failed assets or unhandled fixture requests",
+      "ok": true,
+      "detail": {
+        "errors": [],
+        "resources": [],
+        "unhandled": []
+      }
+    }
+  ],
+  "rpcRequests": 103
+}

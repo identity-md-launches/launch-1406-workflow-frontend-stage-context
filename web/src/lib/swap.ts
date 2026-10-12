@@ -85,29 +85,30 @@ export function applySlippage(amountOut: bigint, slippageBps: number): bigint {
   return (amountOut * (10_000n - bps)) / 10_000n
 }
 
-/** Pool price from slot0: currency1 per currency0 (both at `decimals`), as a decimal string. */
-export function priceFromSqrt(sqrtPriceX96: bigint, decimals0 = 18, decimals1 = 18, precision = 6): string {
-  // price = (sqrt / 2^96)^2 * 10^(d0 - d1)
-  const q96 = 2n ** 96n
-  const scale = 10n ** BigInt(precision)
-  const adj = decimals0 >= decimals1 ? 10n ** BigInt(decimals0 - decimals1) : 1n
-  const div = decimals1 > decimals0 ? 10n ** BigInt(decimals1 - decimals0) : 1n
-  const num = sqrtPriceX96 * sqrtPriceX96 * scale * adj
-  const value = num / (q96 * q96 * div)
+/** Round only the final display, keeping at least 12 significant digits for small prices. */
+function formatRatio(numerator: bigint, denominator: bigint, precision = 6): string {
+  if (denominator === 0n) return 'unavailable'
+  if (numerator === 0n) return '0'
+  let scale = 10n ** BigInt(precision)
+  while ((numerator * scale) / denominator < 100_000_000_000n) {
+    scale *= 10n
+    precision++
+  }
+  const value = (numerator * scale + denominator / 2n) / denominator
   const whole = value / scale
   const frac = (value % scale).toString().padStart(precision, '0').replace(/0+$/, '')
   return frac ? `${whole}.${frac}` : whole.toString()
 }
 
-export function invertPrice(price: string, precision = 6): string {
-  const [w, f = ''] = price.split('.')
-  const scale = 10n ** BigInt(precision)
-  const p = BigInt(w) * scale + BigInt((f + '0'.repeat(precision)).slice(0, precision))
-  if (p === 0n) return '∞'
-  const inv = (scale * scale) / p
-  const whole = inv / scale
-  const frac = (inv % scale).toString().padStart(precision, '0').replace(/0+$/, '')
-  return frac ? `${whole}.${frac}` : whole.toString()
+/** Both directions come directly from slot0, never from the other direction's display string. */
+export function pricesFromSqrt(sqrtPriceX96: bigint, decimals0 = 18, decimals1 = 18) {
+  if (sqrtPriceX96 <= 0n) return undefined
+  const numerator = sqrtPriceX96 * sqrtPriceX96 * 10n ** BigInt(decimals0)
+  const denominator = 2n ** 192n * 10n ** BigInt(decimals1)
+  return {
+    currency1Per0: formatRatio(numerator, denominator),
+    currency0Per1: formatRatio(denominator, numerator),
+  }
 }
 
 export const MAX_UINT160 = (1n << 160n) - 1n

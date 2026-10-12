@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useAccount, useChainId } from 'wagmi'
+import { useQueryClient } from '@tanstack/react-query'
 import { numberToHex } from 'viem'
 import { useDeployment } from './useDeployment'
 import { describeError } from '../lib/errors'
@@ -13,6 +14,7 @@ type Eip1193 = { request(args: { method: string; params?: unknown[] }): Promise<
  */
 export function useEnsureChain() {
   const d = useDeployment()
+  const queryClient = useQueryClient()
   const { connector, isConnected, chainId: accountChainId } = useAccount()
   const configuredChainId = useChainId()
   const [busy, setBusy] = useState(false)
@@ -36,12 +38,13 @@ export function useEnsureChain() {
         await provider.request({ method: 'wallet_addEthereumChain', params: [d.walletAddChain] })
         await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: chainIdHex }] })
       }
+      await queryClient.invalidateQueries({ queryKey: ['walletClient'] })
     } catch (e) {
       setError(describeError(e))
     } finally {
       setBusy(false)
     }
-  }, [connector, d.chainId, d.walletAddChain])
+  }, [connector, d.chainId, d.walletAddChain, queryClient])
 
   return { wrongChain, configuredChainId, chainName: d.network?.name ?? `chain ${d.chainId}`, switchToConfigured, busy, error }
 }

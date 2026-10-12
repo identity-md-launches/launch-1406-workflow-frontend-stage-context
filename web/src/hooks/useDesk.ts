@@ -1,9 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import { usePublicClient, useReadContract, useAccount } from 'wagmi'
 import { erc20Abi, type Address } from 'viem'
 import { settings } from '../config'
 import { useDeployment } from './useDeployment'
 import { toCase, type Case } from '../lib/cases'
+import { findDeploymentBlock } from '../lib/blocks'
+import { createCaseHistoryReader } from '../lib/history'
 
 /** The desk's live settings and the addresses it points at. */
 export function useDeskInfo() {
@@ -42,27 +45,43 @@ export function useDeskInfo() {
   }
 }
 
-/** Every case, newest first, read with batched eth_call (caseCount then getCase for each id). */
+/** Index the desk's event history, then populate cards from a consistent block of contract state. */
 export function useCases() {
   const d = useDeployment()
   const client = usePublicClient()
   const desk = d.addresses.SnitchDesk
   const abi = d.abis.SnitchDesk
+  const readHistory = useMemo(() => client && createCaseHistoryReader({
+    latestBlock: () => client.getBlockNumber(),
+    deploymentBlock: async () => {
+      const first = await findDeploymentBlock(client, desk, await client.getBlockNumber())
+      if (first === undefined) throw new Error('No SnitchDesk code found on the configured chain.')
+      return first
+    },
+    events: async (fromBlock, toBlock) => {
+      const logs = await client.getContractEvents({ address: desk, abi, fromBlock, toBlock, strict: true })
+      return logs.map(log => ({
+        eventName: log.eventName,
+        caseId: (log.args as { caseId?: bigint }).caseId,
+        blockNumber: log.blockNumber!,
+        logIndex: log.logIndex!,
+        removed: log.removed,
+      }))
+    },
+  }), [client, desk, abi])
   return useQuery({
-    queryKey: ['cases', desk],
+    queryKey: ['cases', d.chainId, desk],
     enabled: !!client,
     refetchInterval: settings.pollIntervalMs,
     queryFn: async (): Promise<Case[]> => {
-      if (!client) return []
-      const count = (await client.readContract({ abi, address: desk, functionName: 'caseCount' })) as bigint
-      const ids: bigint[] = []
-      for (let i = count; i >= 1n; i--) ids.push(i)
+      if (!client || !readHistory) return []
+      const { ids, blockNumber } = await readHistory()
       const out: Case[] = []
       const batch = 40
       for (let i = 0; i < ids.length; i += batch) {
         const slice = ids.slice(i, i + batch)
         const results = await Promise.all(
-          slice.map((id) => client.readContract({ abi, address: desk, functionName: 'getCase', args: [id] })),
+          slice.map((id) => client.readContract({ abi, address: desk, functionName: 'getCase', args: [id], blockNumber })),
         )
         results.forEach((raw, j) => out.push(toCase(slice[j], raw)))
       }
@@ -95,24 +114,29 @@ export function useCase(id: bigint | undefined) {
 
 /** Balance and allowance of an ERC-20 for the connected account. */
 export function useTokenPosition(token: Address | undefined, spender: Address | undefined) {
-  const { address } = useAccount()
+  const d = useDeployment()
+  const { address, isConnected, chainId } = useAccount()
+  const enabled = isConnected && chainId === d.chainId && !!token && !!address
   const balance = useReadContract({
     abi: erc20Abi,
     address: token,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
-    query: { enabled: !!token && !!address, refetchInterval: settings.pollIntervalMs },
+    chainId: d.chainId,
+    query: { enabled, refetchInterval: settings.pollIntervalMs },
   })
   const allowance = useReadContract({
     abi: erc20Abi,
     address: token,
     functionName: 'allowance',
     args: address && spender ? [address, spender] : undefined,
-    query: { enabled: !!token && !!address && !!spender, refetchInterval: settings.pollIntervalMs },
+    chainId: d.chainId,
+    query: { enabled: enabled && !!spender, refetchInterval: settings.pollIntervalMs },
   })
   return {
-    balance: balance.data as bigint | undefined,
-    allowance: allowance.data as bigint | undefined,
+    balance: enabled && balance.isSuccess ? balance.data as bigint : undefined,
+    allowance: enabled && allowance.isSuccess && !allowance.isFetching ? allowance.data as bigint : undefined,
+    allowanceError: enabled ? allowance.error : null,
     refetch: () => Promise.all([balance.refetch(), allowance.refetch()]),
   }
 }

@@ -168,13 +168,14 @@ export function Report({ id }: { id: bigint }) {
             <h2 id="case-actions" className="h-small">
               Actions
             </h2>
+            {fileTx.walletStatus && <p className="hint" role="status">{fileTx.walletStatus}</p>}
             {c.status === Status.Answered && (
               <div className="action">
                 <p>Anyone can file an answered case. The report NFT is minted to the opener.</p>
                 <button
                   type="button"
                   className="btn btn--primary"
-                  disabled={!isConnected || wrongChain || fileTx.busy}
+                  disabled={!fileTx.ready || fileTx.busy}
                   onClick={() => fileTx.send({ abi: d.abis.SnitchDesk, address: d.addresses.SnitchDesk, functionName: 'fileReport', args: [c.id] })}
                 >
                   {fileTx.busy ? 'Filing…' : 'File the report'}
@@ -198,7 +199,7 @@ export function Report({ id }: { id: bigint }) {
                     <button
                       type="button"
                       className="btn btn--primary"
-                      disabled={!canDrop || wrongChain || dropTx.busy}
+                      disabled={!canDrop || !dropTx.ready || dropTx.busy}
                       onClick={() => dropTx.send({ abi: d.abis.SnitchDesk, address: d.addresses.SnitchDesk, functionName: 'dropCase', args: [c.id] })}
                     >
                       {dropTx.busy ? 'Dropping…' : 'Drop the case'}

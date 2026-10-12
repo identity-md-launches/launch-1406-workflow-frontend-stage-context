@@ -371,6 +371,17 @@ input.mono {
 .menu__empty {
   font-size: var(--text-caption);
 }
+@media (max-width: 22rem) {
+  .site-header__row .connect {
+    flex-basis: 100%;
+  }
+  .menu {
+    inset-inline-start: 0;
+    inset-inline-end: auto;
+    min-width: min(16rem, calc(100vw - 2rem));
+    max-width: calc(100vw - 2rem);
+  }
+}
 
 /* ---- Home ---- */
 .hero {
@@ -424,8 +435,8 @@ input.mono {
 
 /* The stamp: one animation, dropping onto the card when a verdict lands. */
 .stamp {
-  transform-box: fill-box;
-  transform-origin: center;
+  transform-box: view-box;
+  transform-origin: 0 0;
 }
 @media (prefers-reduced-motion: no-preference) {
   .stamp:not(.stamp--down) {

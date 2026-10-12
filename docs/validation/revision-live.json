@@ -1,0 +1,60 @@
+{
+  "checkedAt": "2026-10-12T13:26:27.158Z",
+  "chainId": 1,
+  "contracts": [
+    {
+      "name": "LaunchToken",
+      "address": "0x5e5b866b079d4063ba080b758aef127ccd570fea",
+      "codeBytes": 1740
+    },
+    {
+      "name": "SnitchArt",
+      "address": "0xc5eb37c168201cbafbec658ada575bffa7877f97",
+      "codeBytes": 11866
+    },
+    {
+      "name": "SnitchDesk",
+      "address": "0x15e09de7237b98b882be85ea0584c2340795eb5b",
+      "codeBytes": 16545
+    }
+  ],
+  "history": {
+    "fromBlock": "26176091",
+    "toBlock": "26176683",
+    "events": [
+      {
+        "eventName": "OracleSignerSet",
+        "blockNumber": "26176091",
+        "logIndex": 1
+      },
+      {
+        "eventName": "OwnershipTransferred",
+        "blockNumber": "26176091",
+        "logIndex": 2
+      },
+      {
+        "eventName": "IntakeSet",
+        "blockNumber": "26176091",
+        "logIndex": 3
+      },
+      {
+        "eventName": "ActionSet",
+        "blockNumber": "26176091",
+        "logIndex": 4
+      },
+      {
+        "eventName": "CaseFeeSet",
+        "blockNumber": "26176091",
+        "logIndex": 5
+      },
+      {
+        "eventName": "PanelSet",
+        "blockNumber": "26176091",
+        "logIndex": 6
+      }
+    ],
+    "caseCount": "0"
+  },
+  "transactionsBroadcast": 0,
+  "ok": true
+}

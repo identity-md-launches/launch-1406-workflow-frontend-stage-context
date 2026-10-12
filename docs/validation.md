@@ -1,5 +1,14 @@
 # SNITCH frontend: validation record
 
+**Current revision:** [reproduction, repairs and final checks](validation/revision.md). All 11
+review findings have responses in the repository-root `.imd-responses.json`: nine fixed and two
+disputed against explicit assignment guidance. The current export passed typecheck, build, 40 unit
+tests, 45 deterministic browser checks, four live browser checks, and the manifest/ABI audit.
+
+The record below describes the original accepted implementation and its original checks. In
+particular, the original case-number index and pool-price display are superseded by this revision;
+its screenshots are historical, not evidence of the corrected export.
+
 Worker-side validation of the static export in `dist/` built from `web/` on 2026-10-12. This is the
 worker's report, not an independent certification; the publication checks (CID, asset hashes,
 deployment configuration, RPC chain id, contract code) run after submission and are not claimed

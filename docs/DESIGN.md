@@ -64,7 +64,9 @@ inside a group) and by the 2 px border only where a control or panel needs a sha
 
 Breakpoints come from the content and are written in rem: two-column field rows and kind tabs from
 40rem, the hero grid (card 24rem + folders) from 52rem, the report grid and owner grid from 56rem,
-and the facts list collapses to one column below 30rem. All grids use `minmax(0, …)` so long
+and the facts list collapses to one column below 30rem. At or below 22rem the wallet controls occupy
+a separate header row; the wallet menu anchors to its inline start and fits within the viewport's
+1rem margins. Above that breakpoint the menu retains its inline-end alignment. All grids use `minmax(0, …)` so long
 addresses wrap instead of overflowing; verified in the browser at 320, 390 and 1280 px with no
 horizontal scroll. Logical properties (`inset-inline-*`, `padding-inline-*`) are used for
 direction-dependent spacing; RTL was not rendered.
@@ -93,7 +95,8 @@ whose bottom border merges with the header rule.
   height, headline face, 2 px border. One `--primary` (ink fill) per step. Press feedback is
   `scale: 0.96`; hover darkens the surface only under `@media (hover: hover)`. Disabled is native
   `disabled` at 45 % opacity, used only when the action is genuinely unavailable (not connected,
-  wrong chain, already approved, in flight). Submit buttons stay enabled and validate on submit.
+  wrong chain, wallet client preparing, allowance unknown, already approved, in flight). With known
+  prerequisites, submit buttons validate form fields and explain missing approvals on submit.
 - **Segmented control** (`.segmented`, `.segmented__item[aria-pressed]`): verdict filters and swap
   direction; pressed state is an ink fill.
 - **Kind tabs** (`.tabs`, `.tab`, `.tab--active`; `web/src/pages/Open.tsx`): radio inputs inside
@@ -104,7 +107,8 @@ whose bottom border merges with the header rule.
 - **Report card** (`web/src/components/ReportCard.tsx`, `.card`, `.stamp`): inline SVG with the
   on-chain geometry (480×640), `role="img"` with the claim as its name; `example` adds the
   "Example" tag; `animateStamp` plays the single drop animation (420 ms, `cubic-bezier(0.2,0,0,1)`)
-  only under `prefers-reduced-motion: no-preference`.
+  only under `prefers-reduced-motion: no-preference`. The stamp uses `transform-box: view-box` and
+  `transform-origin: 0 0`, so its SVG `rotate(-12 300 420)` keeps both verdicts above the panel text.
 - **Address chip** (`web/src/components/AddressChip.tsx`, `.chip`): checksummed address, explorer
   link, copy button with an accessible name; `full` shows the whole address.
 - **Transaction status** (`web/src/components/TxStatus.tsx`, `.tx`, `.tx--error`): a stable
@@ -113,6 +117,11 @@ whose bottom border merges with the header rule.
   focus returns to the trigger) and the connected account (`.connect__account`, with a
   `.connect__note` "wrong network" suffix). The single "Switch to Ethereum" control is the
   `.banner` in `web/src/components/Layout.tsx`, shown only while the wallet is on another chain.
+- **Skip link** (`web/src/components/Layout.tsx`): prevents hash navigation, focuses `#main` and
+  scrolls it into view, preserving the current application route and form inputs.
+- **Allowance states** (`web/src/pages/Open.tsx`, `web/src/pages/Trade.tsx`): disconnected,
+  wrong-network, loading and failed reads have explicit labels; only a successful read covering
+  the amount says approved/allowed. Failed reads offer “Retry allowance checks”.
 - **Report list row** (`.report-row__link` in `web/src/pages/Cases.tsx`): number, claim and verdict
   with a ✓/✕ glyph so the verdict is not colour-only.
 - **Folders** (`.folder`) on the home page link to the open form with the kind preselected.

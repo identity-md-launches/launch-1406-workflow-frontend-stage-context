@@ -9,7 +9,7 @@ import { useEnsureChain } from '../hooks/useEnsureChain'
 import { useTx } from '../hooks/useTx'
 import { describeError } from '../lib/errors'
 import { formatAmount } from '../lib/format'
-import { applySlippage, encodeExecute, invertPrice, MAX_UINT48, planSwap, poolId, priceFromSqrt } from '../lib/swap'
+import { applySlippage, encodeExecute, MAX_UINT48, planSwap, poolId, pricesFromSqrt } from '../lib/swap'
 
 type Side = 'buy' | 'sell'
 
@@ -41,7 +41,8 @@ export function Trade() {
     address: uni?.permit2,
     functionName: 'allowance',
     args: address && inputToken && uni ? [address, inputToken, uni.universalRouter] : undefined,
-    query: { enabled: !!address && !!inputToken && !!uni, refetchInterval: settings.pollIntervalMs },
+    chainId: d.chainId,
+    query: { enabled: isConnected && !wrongChain && !!address && !!inputToken && !!uni, refetchInterval: settings.pollIntervalMs },
   })
   const slot0 = useReadContract({
     abi: stateViewAbi,
@@ -67,6 +68,7 @@ export function Trade() {
     if (!client || !uni || !key || !inputToken || !amountIn || amountIn <= 0n) {
       setQuote(null)
       setQuoteError(null)
+      setQuoting(false)
       return
     }
     const plan = planSwap(key, inputToken, amountIn, 0n)
@@ -100,10 +102,11 @@ export function Trade() {
   const validQuote = quote && amountIn !== undefined && quote.forAmount === amountIn && quote.forSide === side ? quote : null
   const minOut = validQuote ? applySlippage(validQuote.amountOut, slippageBps) : undefined
   const balanceShort = amountIn !== undefined && position.balance !== undefined && position.balance < amountIn
-  const needTokenApproval = amountIn !== undefined && position.allowance !== undefined && position.allowance < amountIn
-  const p2 = permit2Allowance.data as readonly [bigint, number, number] | undefined
+  const needTokenApproval = amountIn !== undefined && position.allowance !== undefined ? position.allowance < amountIn : undefined
+  const p2 = isConnected && !wrongChain && permit2Allowance.isSuccess && !permit2Allowance.isFetching ? permit2Allowance.data as readonly [bigint, number, number] : undefined
   const nowSec = Math.floor(Date.now() / 1000)
-  const needPermit2 = amountIn !== undefined && p2 !== undefined && (p2[0] < amountIn || p2[1] <= nowSec)
+  const needPermit2 = amountIn !== undefined && p2 !== undefined ? (p2[0] < amountIn || p2[1] <= nowSec) : undefined
+  const unknownAllowance = (error: unknown) => !isConnected ? 'Connect a wallet' : wrongChain ? 'Wrong network' : !amountIn ? 'Enter an amount' : error ? 'Allowance unavailable' : 'Checking allowance…'
 
   const approveToken = useTx(async () => {
     await position.refetch()
@@ -126,14 +129,15 @@ export function Trade() {
     )
   }
 
-  const price = slot0.data ? priceFromSqrt((slot0.data as readonly [bigint, number, number, number])[0]) : undefined
   // currency0 is SNITCH or the pair token depending on address order; express both ways.
   const snitchIs0 = key.currency0.toLowerCase() === snitchAddress.toLowerCase()
-  const pairPerSnitch = price ? (snitchIs0 ? price : invertPrice(price)) : undefined
-  const snitchPerPair = pairPerSnitch ? invertPrice(pairPerSnitch) : undefined
+  const price = slot0.data ? pricesFromSqrt((slot0.data as readonly [bigint, number, number, number])[0], snitchIs0 ? 18 : pair!.decimals, snitchIs0 ? pair!.decimals : 18) : undefined
+  const pairPerSnitch = snitchIs0 ? price?.currency1Per0 : price?.currency0Per1
+  const snitchPerPair = snitchIs0 ? price?.currency0Per1 : price?.currency1Per0
   const [submitError, setSubmitError] = useState<string | null>(null)
   function blocker(): string | null {
     if (!amountIn || amountIn <= 0n) return `Enter the amount of ${inputSymbol} to pay.`
+    if (needTokenApproval === undefined || needPermit2 === undefined) return 'Both allowances must be read successfully before swapping. Wait for the checks or retry them.'
     if (balanceShort) return `Not enough ${inputSymbol}: you hold ${formatAmount(position.balance)}.`
     if (!validQuote || minOut === undefined) return quoteError ?? 'Waiting for the quote. Try again in a moment.'
     if (needTokenApproval !== false) return `Approve ${inputSymbol} to Permit2 first (step 1).`
@@ -229,15 +233,17 @@ export function Trade() {
         <section className="stepper" aria-label="Steps">
           {!isConnected && <p className="hint">Connect a wallet (top of the page) to trade.</p>}
           {isConnected && wrongChain && <p className="hint">Switch the wallet to {chainName} (top of the page) to trade.</p>}
+          {swap.walletStatus && <p className="hint" role="status">{swap.walletStatus}</p>}
+          {(position.allowanceError || (isConnected && !wrongChain && permit2Allowance.error)) && <p className="error" role="alert">Unable to read allowances. <button type="button" className="btn btn--small" onClick={() => Promise.all([position.refetch(), permit2Allowance.refetch()])}>Retry allowance checks</button></p>}
           <div className="action">
             <h3 className="h-small">1. Approve {inputSymbol} to Permit2</h3>
             <button
               type="button"
               className="btn"
-              disabled={!isConnected || wrongChain || !amountIn || !needTokenApproval || approveToken.busy}
+              disabled={!approveToken.ready || !amountIn || needTokenApproval !== true || approveToken.busy}
               onClick={() => inputToken && amountIn && approveToken.send({ abi: erc20Abi, address: inputToken, functionName: 'approve', args: [uni.permit2, amountIn] })}
             >
-              {approveToken.busy ? 'Approving…' : needTokenApproval === false && amountIn ? `${inputSymbol} approved to Permit2` : `Approve ${inputSymbol} to Permit2`}
+              {approveToken.busy ? 'Approving…' : needTokenApproval === undefined ? unknownAllowance(position.allowanceError) : needTokenApproval === false && amountIn ? `${inputSymbol} approved to Permit2` : `Approve ${inputSymbol} to Permit2`}
             </button>
             <TxStatus state={approveToken.state} doneText="Approved to Permit2." />
           </div>
@@ -246,7 +252,7 @@ export function Trade() {
             <button
               type="button"
               className="btn"
-              disabled={!isConnected || wrongChain || !amountIn || needTokenApproval !== false || !needPermit2 || approvePermit2.busy}
+              disabled={!approvePermit2.ready || !amountIn || needTokenApproval !== false || needPermit2 !== true || approvePermit2.busy}
               onClick={() =>
                 inputToken &&
                 amountIn &&
@@ -258,14 +264,14 @@ export function Trade() {
                 })
               }
             >
-              {approvePermit2.busy ? 'Approving…' : needPermit2 === false && amountIn ? 'Router allowed' : 'Allow the universal router (30 days)'}
+              {approvePermit2.busy ? 'Approving…' : needPermit2 === undefined ? unknownAllowance(permit2Allowance.error) : needPermit2 === false && amountIn ? 'Router allowed' : 'Allow the universal router (30 days)'}
             </button>
             <TxStatus state={approvePermit2.state} doneText="The router may spend this amount for 30 days." />
           </div>
           <div className="action">
             <h3 className="h-small">3. Swap</h3>
             <p className="hint">The swap is simulated first; a revert reason shows here before the wallet opens.</p>
-            <button type="submit" className="btn btn--primary" disabled={!isConnected || wrongChain || swap.busy}>
+            <button type="submit" className="btn btn--primary" disabled={!swap.ready || (amountIn !== undefined && (needTokenApproval === undefined || needPermit2 === undefined)) || swap.busy}>
               {swap.busy ? 'Swapping…' : side === 'buy' ? 'Buy SNITCH' : 'Sell SNITCH'}
             </button>
             {submitError && (

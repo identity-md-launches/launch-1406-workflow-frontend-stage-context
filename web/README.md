@@ -39,7 +39,7 @@ assignment's handoff inputs, kept so the manifest can be regenerated when `.imd/
 
 ```sh
 cd web
-npm ci                      # dependencies (node_modules is not committed)
+npm ci                      # needs registry access; node_modules is not committed
 npm run typecheck           # tsc --noEmit
 npm test                    # vitest: swap encoding, formatting, routing, config validation, errors
 npm run build               # typecheck + vite build → ../dist (relative base ./)
@@ -57,11 +57,23 @@ The export works from any gateway subpath or ENS name: all asset URLs are relati
 hashes (`#/cases`, `#/report/42`, `#/open?kind=1`, `#/trade`, `#/how`, `#/owner`), and the manifest
 is resolved against `document.baseURI`.
 
+Installing from source requires network access. The assignment permits that install and excludes
+dependency/cache directories and unnecessary registry archives from the submission. The committed
+export needs no npm install or build to serve: from the repository root,
+`python3 -m http.server 4173 --directory dist` serves the already bundled files. Contract reads and
+wallet operations still require network access. An empty-cache `npm ci --offline` is not supported.
+
+Social preview image metadata remains pending: no public domain or gateway URL was supplied.
+The pinned frontend UX adapter explicitly defers absolute Open Graph URLs in that situation.
+The publisher can add a reachable image URL once hosting is known, then regenerate the manifest;
+the worker does not guess a public URL or publish the site.
+
 ## What the pages do
 
 - **Home**: tagline, example card (never read from the chain), the two case kinds as folder
   tabs, the five latest reports.
-- **Case files**: every answered or filed case, filters All / Clean / Snitched, search by wallet,
+- **Case files**: every answered or filed case from the desk's event history, newest answer first
+  by block/log position; filters All / Clean / Snitched, search by wallet,
   token address, symbol or case number; the connected wallet's own cases; open cases.
 - **Report**: the card (client-side SVG with the same geometry as `SnitchArt.svg`), claim,
   verdict, panel numbers, Etherscan links, "Post it on X", `File the report` (anyone, answered
@@ -82,9 +94,18 @@ signs. Every write is simulated with `simulateContract` first and its revert rea
 (`src/lib/errors.ts`). Amounts use each token's decimals; USD context is deliberately absent
 because the site reads no price source.
 
+The report index (`src/lib/history.ts`) locates the desk's deployment through `eth_getCode`, scans
+`eth_getLogs` in ranges of at most 1,000 blocks (splitting smaller if the provider requires it), and
+uses `CaseOpened`/`CaseAnswered` positions. Later `ReportFiled` events do not reorder answers.
+`getCase` reads at the scanned block populate the cards. Polls refresh a 12-block overlap for recent
+reorgs; reloading rescans the complete history. A failed scan shows an error rather than treating a
+partial history as complete. Filtering preserves event order.
+
 ## Validation
 
 See `docs/validation.md` for the build, typecheck, unit-test and browser results (mocked wallet,
 live RPC reads), the Better Interface review, and what was not tested on a live chain.
+The revision evidence and commands are in `docs/validation/revision.md`, including 45 deterministic
+browser checks, four live-read checks, and the response to each review finding.
 `docs/DESIGN.md` documents the implemented tokens, typography, components and responsive
 behaviour for anyone adding a page.

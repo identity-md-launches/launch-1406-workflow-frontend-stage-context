@@ -1,0 +1,10 @@
+{
+  "workingTreeSubmissionFileBytes": 6147524,
+  "changedAndNewFileBytes": 2019315,
+  "limitBytes": 8388608,
+  "changedPaths": 40,
+  "pathScope": "all allowed, including explicitly requested root response file",
+  "dependencyPayloads": "none",
+  "gitCommit": "unavailable: .git is read-only; git add failed creating index.lock",
+  "gitBundle": "not created: --all requires a missing promisor object; fetching it cannot write read-only .git. Actual publisher Git bundle size not measured."
+}

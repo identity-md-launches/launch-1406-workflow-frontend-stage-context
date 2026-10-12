@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { decodeAbiParameters, encodeAbiParameters, keccak256 } from 'viem'
-import { applySlippage, encodeExecute, invertPrice, planSwap, poolId, priceFromSqrt, sortCurrencies, V4_ACTIONS, V4_SWAP_COMMAND } from '../src/lib/swap'
+import { applySlippage, encodeExecute, planSwap, poolId, pricesFromSqrt, sortCurrencies, V4_ACTIONS, V4_SWAP_COMMAND } from '../src/lib/swap'
 import { poolKeyComponents, type PoolKey } from '../src/config'
 
 const key: PoolKey = {
@@ -93,9 +93,19 @@ describe('slippage and price', () => {
     expect(applySlippage(10_000n, 20_000)).toBe(0n)
   })
   it('reads a 1:1 pool from sqrtPriceX96 = 2^96 and inverts', () => {
-    expect(priceFromSqrt(2n ** 96n)).toBe('1')
-    expect(priceFromSqrt(2n ** 97n)).toBe('4')
-    expect(invertPrice('4')).toBe('0.25')
-    expect(invertPrice('0')).toBe('∞')
+    expect(pricesFromSqrt(2n ** 96n)).toEqual({ currency1Per0: '1', currency0Per1: '1' })
+    expect(pricesFromSqrt(2n ** 97n)).toEqual({ currency1Per0: '4', currency0Per1: '0.25' })
+    expect(pricesFromSqrt(0n)).toBeUndefined()
+  })
+  it('rounds each final direction independently for the reported small price', () => {
+    const price = pricesFromSqrt(128792602073356601575926592n)!
+    expect(price.currency0Per1).toBe('378422.832676')
+    expect(Number(price.currency1Per0)).toBeCloseTo(0.0000026425466796746373, 16)
+  })
+  it('accounts for different decimals and preserves very small prices', () => {
+    expect(pricesFromSqrt(2n ** 96n, 6, 18)).toEqual({ currency1Per0: '0.000000000001', currency0Per1: '1000000000000' })
+    const p = pricesFromSqrt(128792602073356601575926592n, 6, 18)!
+    expect(Number(p.currency1Per0)).toBeGreaterThan(0)
+    expect(Number(p.currency1Per0) * Number(p.currency0Per1)).toBeCloseTo(1, 10)
   })
 })

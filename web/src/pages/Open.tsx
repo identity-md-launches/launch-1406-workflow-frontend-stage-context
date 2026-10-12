@@ -53,6 +53,12 @@ export function Open({ initialKind }: { initialKind?: number }) {
   const [errors, setErrors] = useState<Errors>({})
   const ids = { token: useId(), wallet: useId(), from: useId(), to: useId() }
   const firstInvalid = useRef<HTMLInputElement | null>(null)
+  const rangeEdited = useRef({ from: false, to: false })
+
+  function setDefaultRange(range: { fromBlock: bigint; toBlock: bigint }) {
+    if (!rangeEdited.current.from) setFromBlock(range.fromBlock.toString())
+    if (!rangeEdited.current.to) setToBlock(range.toBlock.toString())
+  }
 
   // Default range: the token's deployment block (binary search on eth_getCode), else the last 30 days, to the latest block.
   // The search reads the latest block itself: depending on the live block number here would cancel
@@ -74,8 +80,7 @@ export function Open({ initialKind }: { initialKind?: number }) {
         const deployment = await withTimeout(findDeploymentBlock(client, t as Address, latest), 45_000)
         if (cancelled) return
         const range = defaultRange(latest, deployment)
-        setFromBlock(range.fromBlock.toString())
-        setToBlock(range.toBlock.toString())
+        setDefaultRange(range)
         setRangeNote(
           deployment !== undefined
             ? `Default window: from the token's deployment block ${commas(deployment)} to the latest block ${commas(latest)}.`
@@ -85,8 +90,7 @@ export function Open({ initialKind }: { initialKind?: number }) {
         if (cancelled) return
         if (latest !== undefined) {
           const range = defaultRange(latest, undefined)
-          setFromBlock(range.fromBlock.toString())
-          setToBlock(range.toBlock.toString())
+          setDefaultRange(range)
         }
         setRangeNote(`Unable to find the deployment block (${describeError(e)}). Default window: the last ~30 days.`)
       } finally {
@@ -101,8 +105,9 @@ export function Open({ initialKind }: { initialKind?: number }) {
 
   const fee = desk.caseFee
   const price = desk.oraclePrice
-  const needSnitchApproval = fee !== undefined && snitch.allowance !== undefined && snitch.allowance < fee
-  const needImdApproval = price !== undefined && imd.allowance !== undefined && imd.allowance < price
+  const needSnitchApproval = fee !== undefined && snitch.allowance !== undefined ? snitch.allowance < fee : undefined
+  const needImdApproval = price !== undefined && imd.allowance !== undefined ? imd.allowance < price : undefined
+  const unknownAllowance = (error: unknown) => !isConnected ? 'Connect a wallet' : wrongChain ? 'Wrong network' : error ? 'Allowance unavailable' : 'Checking allowance…'
   const snitchShort = fee !== undefined && snitch.balance !== undefined && snitch.balance < fee
   const imdShort = price !== undefined && imd.balance !== undefined && imd.balance < price
 
@@ -161,6 +166,7 @@ export function Open({ initialKind }: { initialKind?: number }) {
   /** Why the opening cannot be sent yet, in the order the steps fix it. */
   function blocker(): string | null {
     if (fee === undefined || price === undefined) return 'The fee and oracle price are still loading. Try again in a moment.'
+    if (needSnitchApproval === undefined || needImdApproval === undefined) return 'Both allowances must be read successfully before opening a case. Wait for the checks or retry them.'
     if (snitchShort) return `This wallet holds ${formatAmount(snitch.balance)} SNITCH; the case fee is ${formatAmount(fee)} SNITCH.`
     if (imdShort) return `This wallet holds ${formatAmount(imd.balance)} ${pair?.symbol ?? 'IMD'}; the oracle price is ${formatAmount(price)} ${pair?.symbol ?? 'IMD'}.`
     if (needSnitchApproval !== false) return 'Approve the SNITCH fee first (step 1).'
@@ -212,7 +218,10 @@ export function Open({ initialKind }: { initialKind?: number }) {
 
         <div className="field">
           <label htmlFor={ids.token}>Token contract</label>
-          <input id={ids.token} name="token" type="text" inputMode="text" autoComplete="off" spellCheck={false} placeholder="0x6982508145454ce325ddbe47a25d4ec3d2311933" value={token} onChange={(e) => setToken(e.target.value)} aria-invalid={!!errors.token} aria-describedby={errors.token ? `${ids.token}-error` : `${ids.token}-hint`} />
+          <input id={ids.token} name="token" type="text" inputMode="text" autoComplete="off" spellCheck={false} placeholder="0x6982508145454ce325ddbe47a25d4ec3d2311933" value={token} onChange={(e) => {
+            if (e.target.value.trim().toLowerCase() !== token.trim().toLowerCase()) rangeEdited.current = { from: false, to: false }
+            setToken(e.target.value)
+          }} aria-invalid={!!errors.token} aria-describedby={errors.token ? `${ids.token}-error` : `${ids.token}-hint`} />
           <p id={`${ids.token}-hint`} className="hint">
             An ERC-20 with code on {chainName}. {finding ? 'Looking up its deployment block…' : rangeNote}
           </p>
@@ -236,7 +245,7 @@ export function Open({ initialKind }: { initialKind?: number }) {
         <div className="field-row">
           <div className="field">
             <label htmlFor={ids.from}>From block</label>
-            <input id={ids.from} name="fromBlock" type="text" inputMode="numeric" autoComplete="off" className="mono" placeholder="21004118" value={fromBlock} onChange={(e) => setFromBlock(e.target.value)} aria-invalid={!!errors.fromBlock} aria-describedby={errors.fromBlock ? `${ids.from}-error` : undefined} />
+            <input id={ids.from} name="fromBlock" type="text" inputMode="numeric" autoComplete="off" className="mono" placeholder="21004118" value={fromBlock} onChange={(e) => { rangeEdited.current.from = true; setFromBlock(e.target.value) }} aria-invalid={!!errors.fromBlock} aria-describedby={errors.fromBlock ? `${ids.from}-error` : undefined} />
             {errors.fromBlock && (
               <p id={`${ids.from}-error`} className="error">
                 {errors.fromBlock}
@@ -245,7 +254,7 @@ export function Open({ initialKind }: { initialKind?: number }) {
           </div>
           <div className="field">
             <label htmlFor={ids.to}>To block</label>
-            <input id={ids.to} name="toBlock" type="text" inputMode="numeric" autoComplete="off" className="mono" placeholder={latestBlock ? latestBlock.toString() : '21077903'} value={toBlock} onChange={(e) => setToBlock(e.target.value)} aria-invalid={!!errors.toBlock} aria-describedby={errors.toBlock ? `${ids.to}-error` : `${ids.to}-hint`} />
+            <input id={ids.to} name="toBlock" type="text" inputMode="numeric" autoComplete="off" className="mono" placeholder={latestBlock ? latestBlock.toString() : '21077903'} value={toBlock} onChange={(e) => { rangeEdited.current.to = true; setToBlock(e.target.value) }} aria-invalid={!!errors.toBlock} aria-describedby={errors.toBlock ? `${ids.to}-error` : `${ids.to}-hint`} />
             <p id={`${ids.to}-hint`} className="hint">
               Latest block: <span className="mono">{latestBlock ? commas(latestBlock) : '…'}</span>
             </p>
@@ -293,16 +302,18 @@ export function Open({ initialKind }: { initialKind?: number }) {
         <section className="stepper" aria-label="Steps">
           {!isConnected && <p className="hint">Connect a wallet (top of the page) to approve and open.</p>}
           {isConnected && wrongChain && <p className="hint">Switch the wallet to {chainName} (top of the page) to continue.</p>}
+          {open.walletStatus && <p className="hint" role="status">{open.walletStatus}</p>}
+          {(snitch.allowanceError || imd.allowanceError) && <p className="error" role="alert">Unable to read allowances. <button type="button" className="btn btn--small" onClick={() => Promise.all([snitch.refetch(), imd.refetch()])}>Retry allowance checks</button></p>}
 
           <div className="action">
             <h3 className="h-small">1. Approve the SNITCH fee</h3>
             <button
               type="button"
               className="btn"
-              disabled={!isConnected || wrongChain || fee === undefined || !needSnitchApproval || approveSnitch.busy}
+              disabled={!approveSnitch.ready || needSnitchApproval !== true || approveSnitch.busy}
               onClick={() => approveSnitch.send({ abi: erc20Abi, address: d.addresses.LaunchToken, functionName: 'approve', args: [d.addresses.SnitchDesk, fee!] })}
             >
-              {approveSnitch.busy ? 'Approving…' : needSnitchApproval === false && isConnected && !wrongChain ? 'SNITCH approved' : `Approve ${fee !== undefined ? formatAmount(fee) : '…'} SNITCH`}
+              {approveSnitch.busy ? 'Approving…' : needSnitchApproval === undefined ? unknownAllowance(snitch.allowanceError) : needSnitchApproval === false ? 'SNITCH approved' : `Approve ${formatAmount(fee)} SNITCH`}
             </button>
             <TxStatus state={approveSnitch.state} doneText="SNITCH approved for exactly the case fee." />
           </div>
@@ -312,10 +323,10 @@ export function Open({ initialKind }: { initialKind?: number }) {
             <button
               type="button"
               className="btn"
-              disabled={!isConnected || wrongChain || price === undefined || !pair || !needImdApproval || approveImd.busy}
+              disabled={!approveImd.ready || !pair || needImdApproval !== true || approveImd.busy}
               onClick={() => pair && approveImd.send({ abi: erc20Abi, address: pair.address, functionName: 'approve', args: [d.addresses.SnitchDesk, price!] })}
             >
-              {approveImd.busy ? 'Approving…' : needImdApproval === false && isConnected && !wrongChain ? `${pair?.symbol ?? 'IMD'} approved` : `Approve ${price !== undefined ? formatAmount(price) : '…'} ${pair?.symbol ?? 'IMD'}`}
+              {approveImd.busy ? 'Approving…' : needImdApproval === undefined ? unknownAllowance(imd.allowanceError) : needImdApproval === false ? `${pair?.symbol ?? 'IMD'} approved` : `Approve ${formatAmount(price)} ${pair?.symbol ?? 'IMD'}`}
             </button>
             <TxStatus state={approveImd.state} doneText={`${pair?.symbol ?? 'IMD'} approved for exactly the oracle price.`} />
           </div>
@@ -325,7 +336,7 @@ export function Open({ initialKind }: { initialKind?: number }) {
             <p className="hint">
               Sends openCaseWithLimits with the quoted fee and price as caps, so a change mined first reverts instead of charging more.
             </p>
-            <button type="submit" className="btn btn--primary" disabled={!isConnected || wrongChain || open.busy}>
+            <button type="submit" className="btn btn--primary" disabled={!open.ready || needSnitchApproval === undefined || needImdApproval === undefined || open.busy}>
               {open.busy ? 'Opening…' : 'Open the case'}
             </button>
             {submitError && (
