@@ -1,0 +1,247 @@
+{
+  "passed": 37,
+  "failed": 0,
+  "caseCount": 0,
+  "results": [
+    {
+      "step": "home: title and h1",
+      "ok": true,
+      "detail": {
+        "title": "SNITCH",
+        "h1": "The swarm snitches on every wallet."
+      }
+    },
+    {
+      "step": "home: example card rendered with Example tag",
+      "ok": true
+    },
+    {
+      "step": "home: latest reports section settled from chain reads",
+      "ok": true,
+      "detail": "No report has been stamped yet. Open the first case."
+    },
+    {
+      "step": "home: no horizontal overflow at 1280",
+      "ok": true
+    },
+    {
+      "step": "home: no horizontal overflow at 390",
+      "ok": true
+    },
+    {
+      "step": "home: no horizontal overflow at 320",
+      "ok": true
+    },
+    {
+      "step": "keyboard: first Tab lands on the skip link, visible",
+      "ok": true,
+      "detail": {
+        "text": "Skip to content",
+        "fv": true,
+        "top": "8px"
+      }
+    },
+    {
+      "step": "keyboard: Connect wallet reachable with a 3px focus ring",
+      "ok": true,
+      "detail": {
+        "text": "Connect wallet",
+        "fv": true,
+        "outline": "solid 3px rgb(28, 26, 23)"
+      }
+    },
+    {
+      "step": "open: live fee and oracle price shown",
+      "ok": true,
+      "detail": "Case fee (burns on an answer)200,000 SNITCHOracle price (paid to the IMD Intake)0.5 IMD"
+    },
+    {
+      "step": "open: disconnected: open/approve buttons disabled",
+      "ok": true
+    },
+    {
+      "step": "connect: wallet menu opens with the EIP-6963 wallet",
+      "ok": true
+    },
+    {
+      "step": "connect: wrong-network banner with a single switch control on the page",
+      "ok": true
+    },
+    {
+      "step": "open: block-range inputs share one height",
+      "ok": true,
+      "detail": [
+        44,
+        44
+      ]
+    },
+    {
+      "step": "connect: switch failed with 4902, wallet_addEthereumChain sent with handoff params, switched again",
+      "ok": true,
+      "detail": {
+        "switches": [
+          "0x1",
+          "0x1"
+        ],
+        "add": {
+          "chainId": "0x1",
+          "chainName": "Ethereum",
+          "rpcUrls": [
+            "https://ethereum-rpc.publicnode.com",
+            "https://eth.drpc.org"
+          ],
+          "nativeCurrency": {
+            "name": "Ether",
+            "symbol": "ETH",
+            "decimals": 18
+          },
+          "blockExplorerUrls": [
+            "https://etherscan.io"
+          ]
+        }
+      }
+    },
+    {
+      "step": "connect: account shown after switching",
+      "ok": true,
+      "detail": "0xc916…ab67"
+    },
+    {
+      "step": "connect: owner sees the Owner settings link",
+      "ok": true
+    },
+    {
+      "step": "open: empty submit focuses the first invalid field and shows the fix",
+      "ok": true,
+      "detail": {
+        "focusedId": "_r_0_",
+        "invalid": "true",
+        "error": "Enter the token contract address as 0x followed by 40 hex characters."
+      }
+    },
+    {
+      "step": "open: default block range from the token deployment block (eth_getCode binary search)",
+      "ok": true,
+      "detail": {
+        "rangeHint": "An ERC-20 with code on Ethereum. Default window: from the token's deployment block 17,046,105 to the latest block 26,176,304.",
+        "fromBlock": "17046105",
+        "toBlock": "26176304",
+        "searchMs": 18660
+      }
+    },
+    {
+      "step": "open: submit before approvals explains the next step",
+      "ok": true,
+      "detail": "This wallet holds 0 SNITCH; the case fee is 200,000 SNITCH."
+    },
+    {
+      "step": "open: approve SNITCH control enabled for a wallet without allowance",
+      "ok": true
+    },
+    {
+      "step": "open: approve simulated, sent to the wallet (SNITCH.approve to the desk), rejection translated",
+      "ok": true,
+      "detail": {
+        "to": "0x5e5b866b079d4063ba080b758aef127ccd570fea",
+        "selector": "0x095ea7b3"
+      }
+    },
+    {
+      "step": "open: no horizontal overflow at 390",
+      "ok": true
+    },
+    {
+      "step": "trade: pool price read from StateView.getSlot0",
+      "ok": true,
+      "detail": "1 SNITCH = 0.000004 IMD · 1 IMD = 250000 SNITCH"
+    },
+    {
+      "step": "trade: quote from the quoter (eth_call) and minimum after slippage",
+      "ok": true,
+      "detail": {
+        "quoted": "233,275.3695 SNITCH",
+        "minOut": "232,108.9926 SNITCH"
+      }
+    },
+    {
+      "step": "trade: step 1 reflects the live Permit2 allowance of this account",
+      "ok": true,
+      "detail": "IMD approved to Permit2"
+    },
+    {
+      "step": "trade: step 2 state read from Permit2.allowance",
+      "ok": true,
+      "detail": {
+        "label": "Allow the universal router (30 days)",
+        "enabled": true
+      }
+    },
+    {
+      "step": "trade: swap submit before allowances explains the next step",
+      "ok": true,
+      "detail": "Allow the universal router through Permit2 first (step 2)."
+    },
+    {
+      "step": "cases: verdict filter toggles aria-pressed",
+      "ok": true
+    },
+    {
+      "step": "cases: search empty state names the query and the exit",
+      "ok": true,
+      "detail": "No report matches “zzzz-no-match”. Clear the search to see every report."
+    },
+    {
+      "step": "report: no case yet on chain, missing-case state shown",
+      "ok": true,
+      "detail": "No case No. 0001"
+    },
+    {
+      "step": "how: deep link under the subpath renders",
+      "ok": true
+    },
+    {
+      "step": "owner: setter disabled until a value is entered",
+      "ok": true
+    },
+    {
+      "step": "owner: setter enabled for the connected owner",
+      "ok": true
+    },
+    {
+      "step": "owner: setCaseFee simulated and sent to the wallet (rejected by the mock)",
+      "ok": true,
+      "detail": {
+        "to": "0x15e09de7237b98b882be85ea0584c2340795eb5b",
+        "selector": "0xf7f2ae7d"
+      }
+    },
+    {
+      "step": "motion: stamp keyframes only under no-preference; static under reduced motion",
+      "ok": true,
+      "detail": {
+        "motionOn": "stamp-drop",
+        "motionOff": {
+          "anim": "none",
+          "opacity": "0.92"
+        }
+      }
+    },
+    {
+      "step": "resources: every asset loads under the /preview/ subpath, nothing requested outside it",
+      "ok": true,
+      "detail": {
+        "outsidePreview": [],
+        "relevantFailures": [],
+        "rpcFailures": 75
+      }
+    },
+    {
+      "step": "console: no page errors or application console errors (network-layer RPC 403 logs counted apart)",
+      "ok": true,
+      "detail": {
+        "appErrors": [],
+        "rpc403Logs": 75
+      }
+    }
+  ]
+}
